@@ -1,325 +1,455 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 
-type HealthStatus = 'checking' | 'connected' | 'disconnected';
+// ─── Types ────────────────────────────────────────────────────────────────────
+type ServiceStatus = 'connected' | 'disconnected' | 'checking';
 
-interface HealthResponse {
+interface HealthData {
   success: boolean;
-  message: string;
-  timestamp: string;
-  environment: string;
+  api: { status: string; environment: string; timestamp: string };
+  mongodb: { status: string; readyState: number };
+  redis: { status: string; ping: string | null };
 }
 
-export default function HomePage() {
-  const [status, setStatus] = useState<HealthStatus>('checking');
-  const [data, setData] = useState<HealthResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [latency, setLatency] = useState<number | null>(null);
+interface ServiceState {
+  overall: ServiceStatus;
+  data: HealthData | null;
+  error: string | null;
+  latency: number | null;
+}
 
-  const checkHealth = async () => {
-    setStatus('checking');
-    setError(null);
-    const start = performance.now();
-    try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000';
-      const res = await fetch(`${apiUrl}/api/health`, { cache: 'no-store' });
-      const elapsed = Math.round(performance.now() - start);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const json: HealthResponse = await res.json();
-      setData(json);
-      setLatency(elapsed);
-      setStatus('connected');
-    } catch (err) {
-      setLatency(null);
-      setError(err instanceof Error ? err.message : 'Unknown error');
-      setStatus('disconnected');
-    }
-  };
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+const toStatus = (s: string): ServiceStatus =>
+  s === 'connected' ? 'connected' : 'disconnected';
 
-  useEffect(() => {
-    checkHealth();
-  }, []);
+const palette = {
+  connected: {
+    color: '#22d3a3',
+    glow: 'rgba(34,211,163,0.35)',
+    border: 'rgba(34,211,163,0.25)',
+    bg: 'rgba(34,211,163,0.07)',
+    label: 'Connected',
+  },
+  disconnected: {
+    color: '#f87171',
+    glow: 'rgba(248,113,113,0.35)',
+    border: 'rgba(248,113,113,0.25)',
+    bg: 'rgba(248,113,113,0.07)',
+    label: 'Disconnected',
+  },
+  checking: {
+    color: '#a78bfa',
+    glow: 'rgba(167,139,250,0.35)',
+    border: 'rgba(167,139,250,0.25)',
+    bg: 'rgba(167,139,250,0.07)',
+    label: 'Checking…',
+  },
+};
 
-  const statusConfig = {
-    checking: {
-      label: 'Checking…',
-      color: '#a78bfa',
-      glow: 'rgba(167,139,250,0.4)',
-      dot: 'animate-pulse bg-violet-400',
-      border: 'rgba(167,139,250,0.3)',
-    },
-    connected: {
-      label: 'Connected',
-      color: '#22d3a3',
-      glow: 'rgba(34,211,163,0.4)',
-      dot: 'bg-emerald-400',
-      border: 'rgba(34,211,163,0.3)',
-    },
-    disconnected: {
-      label: 'Disconnected',
-      color: '#f87171',
-      glow: 'rgba(248,113,113,0.4)',
-      dot: 'animate-pulse bg-red-400',
-      border: 'rgba(248,113,113,0.3)',
-    },
-  };
-
-  const cfg = statusConfig[status];
-
+// ─── Sub-components ───────────────────────────────────────────────────────────
+function StatusDot({ status }: { status: ServiceStatus }) {
+  const c = palette[status];
   return (
-    <main
+    <span
+      aria-hidden="true"
       style={{
-        minHeight: '100dvh',
-        background: 'linear-gradient(135deg, #0f0f13 0%, #13101e 50%, #0d1219 100%)',
+        display: 'inline-block',
+        width: 9,
+        height: 9,
+        borderRadius: '50%',
+        backgroundColor: c.color,
+        boxShadow: `0 0 7px ${c.glow}`,
+        flexShrink: 0,
+        animation: status === 'checking' ? 'pulse 1.4s ease-in-out infinite' : 'none',
+      }}
+    />
+  );
+}
+
+function ServiceCard({
+  id,
+  icon,
+  name,
+  status,
+  rows,
+}: {
+  id: string;
+  icon: string;
+  name: string;
+  status: ServiceStatus;
+  rows: { label: string; value: string }[];
+}) {
+  const c = palette[status];
+  return (
+    <div
+      id={id}
+      style={{
+        background: c.bg,
+        border: `1px solid ${c.border}`,
+        borderRadius: 16,
+        padding: '1.25rem 1.5rem',
         display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '2rem',
-        position: 'relative',
-        overflow: 'hidden',
+        flexDirection: 'column',
+        gap: '0.75rem',
+        transition: 'all 0.4s ease',
       }}
     >
-      {/* Ambient orbs */}
-      <div
-        aria-hidden="true"
-        style={{
-          position: 'absolute',
-          top: '10%',
-          left: '15%',
-          width: '420px',
-          height: '420px',
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(108,99,255,0.12) 0%, transparent 70%)',
-          filter: 'blur(40px)',
-          pointerEvents: 'none',
-        }}
-      />
-      <div
-        aria-hidden="true"
-        style={{
-          position: 'absolute',
-          bottom: '10%',
-          right: '10%',
-          width: '360px',
-          height: '360px',
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(34,211,163,0.08) 0%, transparent 70%)',
-          filter: 'blur(40px)',
-          pointerEvents: 'none',
-        }}
-      />
-
-      {/* Card */}
-      <div
-        style={{
-          position: 'relative',
-          zIndex: 1,
-          background: 'rgba(28,28,38,0.85)',
-          backdropFilter: 'blur(24px)',
-          WebkitBackdropFilter: 'blur(24px)',
-          border: `1px solid ${cfg.border}`,
-          borderRadius: '24px',
-          padding: '3rem 3.5rem',
-          maxWidth: '540px',
-          width: '100%',
-          textAlign: 'center',
-          boxShadow: `0 0 60px ${cfg.glow}, 0 24px 64px rgba(0,0,0,0.5)`,
-          transition: 'border-color 0.5s ease, box-shadow 0.5s ease',
-        }}
-      >
-        {/* Logo mark */}
-        <div
-          style={{
-            width: '72px',
-            height: '72px',
-            borderRadius: '20px',
-            background: 'linear-gradient(135deg, #6c63ff, #a78bfa)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            margin: '0 auto 1.75rem',
-            boxShadow: '0 8px 32px rgba(108,99,255,0.45)',
-            fontSize: '2rem',
-          }}
-          aria-hidden="true"
-        >
-          🧠
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <span style={{ fontSize: '1.1rem' }}>{icon}</span>
+          <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#e0e0f0' }}>{name}</span>
         </div>
-
-        <h1
-          style={{
-            fontSize: '1.875rem',
-            fontWeight: 700,
-            letterSpacing: '-0.02em',
-            marginBottom: '0.5rem',
-            background: 'linear-gradient(135deg, #f0f0ff 30%, #a78bfa)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
-          }}
-        >
-          AI Assessment Creator
-        </h1>
-
-        <p
-          style={{
-            fontSize: '0.95rem',
-            color: '#9999bb',
-            marginBottom: '2.5rem',
-          }}
-        >
-          Backend connection status
-        </p>
-
-        {/* Status badge */}
-        <div
-          id="connection-status"
+        <span
           style={{
             display: 'inline-flex',
             alignItems: 'center',
-            gap: '0.625rem',
-            padding: '0.625rem 1.25rem',
-            borderRadius: '999px',
-            border: `1px solid ${cfg.border}`,
-            background: 'rgba(255,255,255,0.04)',
-            marginBottom: '2rem',
-            transition: 'all 0.4s ease',
+            gap: '0.4rem',
+            fontSize: '0.78rem',
+            fontWeight: 600,
+            color: c.color,
+            background: 'rgba(0,0,0,0.2)',
+            padding: '0.2rem 0.6rem',
+            borderRadius: 999,
+            border: `1px solid ${c.border}`,
           }}
         >
+          <StatusDot status={status} />
+          {c.label}
+        </span>
+      </div>
+
+      {/* Detail rows */}
+      {rows.map(({ label, value }) => (
+        <div
+          key={label}
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            borderTop: '1px solid rgba(255,255,255,0.05)',
+            paddingTop: '0.5rem',
+            gap: '1rem',
+          }}
+        >
+          <span style={{ fontSize: '0.75rem', color: '#7777aa' }}>{label}</span>
           <span
             style={{
-              width: '10px',
-              height: '10px',
+              fontSize: '0.75rem',
+              color: '#c0c0e0',
+              textAlign: 'right',
+              fontFamily: 'monospace',
+            }}
+          >
+            {value}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
+export default function HomePage() {
+  const [state, setState] = useState<ServiceState>({
+    overall: 'checking',
+    data: null,
+    error: null,
+    latency: null,
+  });
+
+  const checkHealth = useCallback(async () => {
+    setState((s) => ({ ...s, overall: 'checking', error: null }));
+    const t0 = performance.now();
+    try {
+      const url = `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000'}/api/health`;
+      const res = await fetch(url, { cache: 'no-store' });
+      const elapsed = Math.round(performance.now() - t0);
+      const json: HealthData = await res.json();
+      setState({
+        overall: json.success ? 'connected' : 'disconnected',
+        data: json,
+        error: null,
+        latency: elapsed,
+      });
+    } catch (err) {
+      setState({
+        overall: 'disconnected',
+        data: null,
+        error: err instanceof Error ? err.message : 'Unknown error',
+        latency: null,
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    checkHealth();
+  }, [checkHealth]);
+
+  const { overall, data, error, latency } = state;
+  const c = palette[overall];
+
+  // Build service cards from response data
+  const mongoStatus: ServiceStatus = data
+    ? toStatus(data.mongodb.status)
+    : overall === 'checking'
+    ? 'checking'
+    : 'disconnected';
+
+  const redisStatus: ServiceStatus = data
+    ? toStatus(data.redis.status)
+    : overall === 'checking'
+    ? 'checking'
+    : 'disconnected';
+
+  const mongoRows = data
+    ? [
+        { label: 'State', value: data.mongodb.status },
+        { label: 'readyState', value: String(data.mongodb.readyState) },
+      ]
+    : [{ label: 'State', value: overall === 'checking' ? '—' : 'N/A' }];
+
+  const redisRows = data
+    ? [
+        { label: 'Ping', value: data.redis.ping ?? '—' },
+        { label: 'State', value: data.redis.status },
+      ]
+    : [{ label: 'State', value: overall === 'checking' ? '—' : 'N/A' }];
+
+  const apiRows = data
+    ? [
+        { label: 'Environment', value: data.api.environment },
+        { label: 'Timestamp', value: new Date(data.api.timestamp).toLocaleTimeString() },
+        ...(latency !== null ? [{ label: 'Latency', value: `${latency}ms` }] : []),
+      ]
+    : [];
+
+  return (
+    <>
+      {/* Keyframe for the pulsing dot */}
+      <style>{`
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.3; }
+        }
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(12px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
+
+      <main
+        style={{
+          minHeight: '100dvh',
+          background: 'linear-gradient(135deg, #0f0f13 0%, #13101e 55%, #0d1219 100%)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '2rem',
+          position: 'relative',
+          overflow: 'hidden',
+          fontFamily: "'Inter', system-ui, sans-serif",
+        }}
+      >
+        {/* Ambient orbs */}
+        {[
+          { top: '8%', left: '12%', color: 'rgba(108,99,255,0.13)', size: 480 },
+          { bottom: '10%', right: '8%', color: 'rgba(34,211,163,0.09)', size: 400 },
+          { top: '55%', left: '55%', color: 'rgba(167,139,250,0.07)', size: 320 },
+        ].map((orb, i) => (
+          <div
+            key={i}
+            aria-hidden="true"
+            style={{
+              position: 'absolute',
+              width: orb.size,
+              height: orb.size,
               borderRadius: '50%',
-              backgroundColor: cfg.color,
-              boxShadow: `0 0 8px ${cfg.glow}`,
-              flexShrink: 0,
-              display: 'inline-block',
+              background: `radial-gradient(circle, ${orb.color} 0%, transparent 70%)`,
+              filter: 'blur(48px)',
+              pointerEvents: 'none',
+              ...orb,
+            }}
+          />
+        ))}
+
+        {/* Card */}
+        <div
+          style={{
+            position: 'relative',
+            zIndex: 1,
+            background: 'rgba(24,24,34,0.88)',
+            backdropFilter: 'blur(28px)',
+            WebkitBackdropFilter: 'blur(28px)',
+            border: `1px solid ${c.border}`,
+            borderRadius: 28,
+            padding: '2.5rem',
+            maxWidth: 520,
+            width: '100%',
+            boxShadow: `0 0 72px ${c.glow}, 0 32px 72px rgba(0,0,0,0.55)`,
+            transition: 'border-color 0.5s ease, box-shadow 0.5s ease',
+            animation: 'fadeUp 0.5s ease both',
+          }}
+        >
+          {/* Logo */}
+          <div
+            style={{
+              width: 64,
+              height: 64,
+              borderRadius: 18,
+              background: 'linear-gradient(135deg, #6c63ff, #a78bfa)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '1.8rem',
+              boxShadow: '0 8px 28px rgba(108,99,255,0.45)',
+              marginBottom: '1.5rem',
             }}
             aria-hidden="true"
-          />
-          <span
+          >
+            🧠
+          </div>
+
+          {/* Title */}
+          <h1
             style={{
-              fontSize: '1rem',
-              fontWeight: 600,
-              color: cfg.color,
-              transition: 'color 0.4s ease',
+              fontSize: '1.65rem',
+              fontWeight: 700,
+              letterSpacing: '-0.02em',
+              marginBottom: '0.3rem',
+              background: 'linear-gradient(135deg, #f0f0ff 30%, #a78bfa)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
             }}
           >
-            {cfg.label}
-          </span>
-          {latency !== null && (
-            <span
+            AI Assessment Creator
+          </h1>
+          <p style={{ fontSize: '0.85rem', color: '#7777aa', marginBottom: '2rem' }}>
+            Infrastructure health dashboard
+          </p>
+
+          {/* Overall status badge */}
+          <div
+            id="overall-status"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.5rem 1rem',
+              borderRadius: 999,
+              border: `1px solid ${c.border}`,
+              background: 'rgba(0,0,0,0.25)',
+              marginBottom: '1.75rem',
+              fontSize: '0.875rem',
+              fontWeight: 600,
+              color: c.color,
+              transition: 'all 0.4s ease',
+            }}
+          >
+            <StatusDot status={overall} />
+            {overall === 'checking'
+              ? 'Checking all services…'
+              : overall === 'connected'
+              ? 'All systems operational'
+              : 'One or more services degraded'}
+            {latency !== null && (
+              <span style={{ fontWeight: 400, fontSize: '0.75rem', color: '#7777aa' }}>
+                · {latency}ms
+              </span>
+            )}
+          </div>
+
+          {/* Connection error banner */}
+          {error && !data && (
+            <div
               style={{
-                fontSize: '0.75rem',
-                color: '#9999bb',
-                marginLeft: '0.25rem',
+                background: 'rgba(248,113,113,0.08)',
+                border: '1px solid rgba(248,113,113,0.25)',
+                borderRadius: 12,
+                padding: '0.875rem 1rem',
+                marginBottom: '1.5rem',
+                fontSize: '0.8rem',
+                color: '#fca5a5',
               }}
             >
-              {latency}ms
-            </span>
+              <strong>Cannot reach backend:</strong> {error}
+              <br />
+              <span style={{ color: '#7777aa', display: 'block', marginTop: 4 }}>
+                Ensure the backend is running on{' '}
+                <code style={{ color: '#a78bfa' }}>
+                  {process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000'}
+                </code>
+              </span>
+            </div>
           )}
+
+          {/* Service cards */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem', marginBottom: '1.75rem' }}>
+            <ServiceCard
+              id="service-api"
+              icon="⚡"
+              name="Express API"
+              status={overall === 'checking' ? 'checking' : overall === 'connected' ? 'connected' : error ? 'disconnected' : 'connected'}
+              rows={apiRows.length ? apiRows : [{ label: 'State', value: '—' }]}
+            />
+            <ServiceCard
+              id="service-mongodb"
+              icon="🍃"
+              name="MongoDB Atlas"
+              status={mongoStatus}
+              rows={mongoRows}
+            />
+            <ServiceCard
+              id="service-redis"
+              icon="⚡"
+              name="Upstash Redis"
+              status={redisStatus}
+              rows={redisRows}
+            />
+          </div>
+
+          {/* Retry button */}
+          <button
+            id="retry-health-check"
+            onClick={checkHealth}
+            disabled={overall === 'checking'}
+            style={{
+              width: '100%',
+              padding: '0.75rem',
+              borderRadius: 14,
+              border: 'none',
+              background:
+                overall === 'checking'
+                  ? 'rgba(108,99,255,0.25)'
+                  : 'linear-gradient(135deg, #6c63ff 0%, #8b5cf6 100%)',
+              color: overall === 'checking' ? '#9999bb' : '#fff',
+              fontSize: '0.9rem',
+              fontWeight: 600,
+              cursor: overall === 'checking' ? 'not-allowed' : 'pointer',
+              boxShadow:
+                overall === 'checking' ? 'none' : '0 4px 20px rgba(108,99,255,0.4)',
+              transition: 'all 0.2s ease',
+              letterSpacing: '0.01em',
+            }}
+            onMouseEnter={(e) => {
+              if (overall !== 'checking') {
+                (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-1px)';
+                (e.currentTarget as HTMLButtonElement).style.boxShadow =
+                  '0 8px 28px rgba(108,99,255,0.55)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)';
+              (e.currentTarget as HTMLButtonElement).style.boxShadow =
+                overall === 'checking' ? 'none' : '0 4px 20px rgba(108,99,255,0.4)';
+            }}
+          >
+            {overall === 'checking' ? 'Checking…' : '↺  Re-check All Services'}
+          </button>
         </div>
-
-        {/* Detail rows */}
-        {status === 'connected' && data && (
-          <div
-            style={{
-              borderTop: '1px solid rgba(255,255,255,0.06)',
-              paddingTop: '1.5rem',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '0.75rem',
-              textAlign: 'left',
-              marginBottom: '1.75rem',
-            }}
-          >
-            {[
-              { label: 'Message', value: data.message },
-              { label: 'Environment', value: data.environment },
-              {
-                label: 'Timestamp',
-                value: new Date(data.timestamp).toLocaleString(),
-              },
-            ].map(({ label, value }) => (
-              <div
-                key={label}
-                style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem' }}
-              >
-                <span style={{ fontSize: '0.8rem', color: '#9999bb', flexShrink: 0 }}>
-                  {label}
-                </span>
-                <span style={{ fontSize: '0.8rem', color: '#e0e0f0', textAlign: 'right' }}>
-                  {value}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {status === 'disconnected' && (
-          <div
-            style={{
-              background: 'rgba(248,113,113,0.07)',
-              border: '1px solid rgba(248,113,113,0.2)',
-              borderRadius: '12px',
-              padding: '1rem',
-              marginBottom: '1.75rem',
-              fontSize: '0.8rem',
-              color: '#fca5a5',
-              textAlign: 'left',
-            }}
-          >
-            <strong>Error:</strong> {error}
-            <br />
-            <span style={{ color: '#9999bb', marginTop: '0.25rem', display: 'block' }}>
-              Make sure the backend is running on{' '}
-              <code style={{ color: '#a78bfa' }}>
-                {process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000'}
-              </code>
-            </span>
-          </div>
-        )}
-
-        {/* Retry button */}
-        <button
-          id="retry-health-check"
-          onClick={checkHealth}
-          disabled={status === 'checking'}
-          style={{
-            padding: '0.75rem 2rem',
-            borderRadius: '12px',
-            border: 'none',
-            background:
-              status === 'checking'
-                ? 'rgba(108,99,255,0.3)'
-                : 'linear-gradient(135deg, #6c63ff, #8b5cf6)',
-            color: '#fff',
-            fontSize: '0.9rem',
-            fontWeight: 600,
-            cursor: status === 'checking' ? 'not-allowed' : 'pointer',
-            transition: 'all 0.2s ease',
-            boxShadow:
-              status === 'checking' ? 'none' : '0 4px 20px rgba(108,99,255,0.4)',
-            letterSpacing: '0.01em',
-          }}
-          onMouseEnter={(e) => {
-            if (status !== 'checking') {
-              (e.target as HTMLButtonElement).style.transform = 'translateY(-1px)';
-              (e.target as HTMLButtonElement).style.boxShadow =
-                '0 8px 28px rgba(108,99,255,0.55)';
-            }
-          }}
-          onMouseLeave={(e) => {
-            (e.target as HTMLButtonElement).style.transform = 'translateY(0)';
-            (e.target as HTMLButtonElement).style.boxShadow =
-              status === 'checking' ? 'none' : '0 4px 20px rgba(108,99,255,0.4)';
-          }}
-        >
-          {status === 'checking' ? 'Checking…' : 'Re-check Connection'}
-        </button>
-      </div>
-    </main>
+      </main>
+    </>
   );
 }

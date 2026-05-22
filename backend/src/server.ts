@@ -1,19 +1,37 @@
 import app from './app';
 import config from './config';
+import { connectDB } from './config/db';
+import { getRedisClient } from './config/redis';
 
-const server = app.listen(config.port, () => {
-  console.log(`Backend running on http://localhost:${config.port}`);
-  console.log(`   Environment: ${config.nodeEnv}`);
-  console.log(`   Health check: http://localhost:${config.port}/api/health`);
-});
+const bootstrap = async (): Promise<void> => {
+  // Connect to MongoDB
+  await connectDB();
 
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  console.log('SIGTERM received. Shutting down gracefully...');
-  server.close(() => {
-    console.log('Server closed.');
-    process.exit(0);
+  // Eagerly connect Redis so the first health-check isn't slow
+  const redis = getRedisClient();
+  await redis.connect();
+
+  // Start HTTP server
+  const server = app.listen(config.port, () => {
+    console.log(`✅ Backend running on http://localhost:${config.port}`);
+    console.log(`   Environment : ${config.nodeEnv}`);
+    console.log(`   Health check: http://localhost:${config.port}/api/health`);
   });
-});
 
-export default server;
+  // Graceful shutdown
+  const shutdown = () => {
+    console.log('\nShutting down gracefully…');
+    server.close(async () => {
+      await redis.quit();
+      process.exit(0);
+    });
+  };
+
+  process.on('SIGTERM', shutdown);
+  process.on('SIGINT', shutdown);
+};
+
+bootstrap().catch((err) => {
+  console.error('Fatal startup error:', err);
+  process.exit(1);
+});
