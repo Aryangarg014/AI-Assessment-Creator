@@ -39,8 +39,8 @@ export default function TopNav({ title = 'Assignment', showBack = true }: TopNav
     <header
       style={{
         height: 'var(--topnav-height)',
-        background: 'var(--content-bg)',
-        borderBottom: '1px solid rgba(0,0,0,0.06)',
+        background: '#ffffff',
+        borderBottom: '1px solid var(--sidebar-border)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -103,7 +103,7 @@ export default function TopNav({ title = 'Assignment', showBack = true }: TopNav
               height: 7,
               borderRadius: '50%',
               background: '#ef4444',
-              border: '1.5px solid var(--content-bg)',
+              border: '1.5px solid #ffffff',
             }}
           />
         </button>

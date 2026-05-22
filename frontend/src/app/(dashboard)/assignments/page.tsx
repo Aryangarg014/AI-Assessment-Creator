@@ -1,13 +1,30 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import EmptyAssignmentsIllustration from '@/components/illustrations/EmptyAssignments';
+import type { Assignment } from '@/types';
 
 export const metadata: Metadata = {
   title: 'Assignments — VedaAI',
   description: 'Create and manage your AI-powered assessments and assignments.',
 };
 
-// ─── Sparkle Icon (reused from sidebar style) ─────────────────────────────────
+// ─── Data Fetching ────────────────────────────────────────────────────────────
+async function getAssignments(): Promise<Assignment[]> {
+  try {
+    const baseUrl = process.env.BACKEND_URL ?? 'http://localhost:5000';
+    const res = await fetch(`${baseUrl}/api/assignments`, {
+      cache: 'no-store', // always fresh — will add SWR/revalidation in a later stage
+    });
+    if (!res.ok) return [];
+    const json = await res.json();
+    return (json.data as Assignment[]) ?? [];
+  } catch {
+    // Backend is down or unreachable — degrade gracefully to empty state
+    return [];
+  }
+}
+
+// ─── Plus Icon ────────────────────────────────────────────────────────────────
 function PlusIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
@@ -17,8 +34,8 @@ function PlusIcon() {
   );
 }
 
-// ─── Assignments Page ─────────────────────────────────────────────────────────
-export default function AssignmentsPage() {
+// ─── Empty State ──────────────────────────────────────────────────────────────
+function EmptyState() {
   return (
     <div
       style={{
@@ -36,7 +53,7 @@ export default function AssignmentsPage() {
           flexDirection: 'column',
           alignItems: 'center',
           textAlign: 'center',
-          maxWidth: 440,
+          maxWidth: 460,
           width: '100%',
         }}
       >
@@ -46,11 +63,11 @@ export default function AssignmentsPage() {
         {/* Heading */}
         <h1
           style={{
-            fontSize: '1.25rem',
+            fontSize: '1.2rem',
             fontWeight: 700,
             color: 'var(--text-primary)',
-            marginTop: '1.5rem',
-            marginBottom: '0.625rem',
+            marginTop: '1.25rem',
+            marginBottom: '0.6rem',
             letterSpacing: '-0.01em',
           }}
         >
@@ -63,8 +80,8 @@ export default function AssignmentsPage() {
             fontSize: '0.875rem',
             color: 'var(--text-secondary)',
             lineHeight: 1.65,
-            maxWidth: 340,
-            marginBottom: '1.75rem',
+            maxWidth: 360,
+            marginBottom: '2rem',
           }}
         >
           Create your first assignment to start collecting and grading student
@@ -72,16 +89,68 @@ export default function AssignmentsPage() {
           assist with grading.
         </p>
 
-        {/* CTA Button */}
+        {/* CTA — more padding than before to match Figma pill size */}
         <Link
           id="create-first-assignment-btn"
           href="/assignments/new"
-          className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#141414] text-white text-[0.9rem] font-semibold tracking-[0.005em] shadow-[0_2px_8px_rgba(0,0,0,0.2)] transition-all duration-200 ease-in-out hover:bg-[#2a2a2a] hover:-translate-y-px hover:shadow-lg no-underline"
+          className="inline-flex items-center gap-2 px-8 py-4 rounded-full bg-[#141414] text-white text-[0.9rem] font-semibold tracking-[0.005em] shadow-[0_2px_8px_rgba(0,0,0,0.2)] transition-all duration-200 ease-in-out hover:bg-[#2a2a2a] hover:-translate-y-px hover:shadow-lg no-underline"
         >
           <PlusIcon />
           Create Your First Assignment
         </Link>
       </div>
+    </div>
+  );
+}
+
+// ─── Assignments Page ─────────────────────────────────────────────────────────
+export default async function AssignmentsPage() {
+  const assignments = await getAssignments();
+
+  // Empty state — DB is empty or backend is unreachable
+  if (assignments.length === 0) {
+    return <EmptyState />;
+  }
+
+  // Assignment list — will be fully built in a later stage
+  // For now, shows a minimal list so the data contract is verified end-to-end
+  return (
+    <div style={{ padding: '32px 28px' }}>
+      <h1
+        style={{
+          fontSize: '1.25rem',
+          fontWeight: 700,
+          color: 'var(--text-primary)',
+          marginBottom: '1.5rem',
+        }}
+      >
+        Assignments ({assignments.length})
+      </h1>
+      <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {assignments.map((a) => (
+          <li
+            key={a._id}
+            style={{
+              background: 'white',
+              borderRadius: 12,
+              padding: '16px 20px',
+              border: '1px solid var(--sidebar-border)',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <div>
+              <p style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.95rem' }}>
+                {a.title}
+              </p>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: 2 }}>
+                Due: {a.dueDate} · Status: {a.status}
+              </p>
+            </div>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

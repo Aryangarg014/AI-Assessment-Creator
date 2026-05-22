@@ -2,6 +2,7 @@ import express, { Application, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import config from './config';
 import healthRoutes from './routes/healthRoutes';
+import assignmentRoutes from './routes/assignmentRoutes';
 
 const app: Application = express();
 
@@ -17,6 +18,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // ─── Routes ──────────────────────────────────────────────────────────────────
 app.use('/api', healthRoutes);
+app.use('/api/assignments', assignmentRoutes);
 
 // ─── 404 Handler ─────────────────────────────────────────────────────────────
 app.use((_req: Request, res: Response) => {
