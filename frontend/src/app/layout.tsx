@@ -9,19 +9,17 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'AI Assessment Creator',
-  description: 'AI-powered assessment generation platform for modern hiring workflows.',
-  keywords: ['AI', 'assessment', 'hiring', 'quiz generator', 'recruitment'],
+  title: 'VedaAI — Assessment Creator',
+  description: 'AI-powered assessment generation platform for modern hiring and education workflows.',
+  keywords: ['AI', 'assessment', 'assignments', 'grading', 'education', 'VedaAI'],
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={inter.variable}>
-      <body>{children}</body>
+      <body style={{ fontFamily: 'var(--font-inter), Inter, system-ui, sans-serif' }}>
+        {children}
+      </body>
     </html>
   );
 }

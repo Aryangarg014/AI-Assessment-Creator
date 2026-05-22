@@ -1,36 +1,156 @@
 @import "tailwindcss";
 
-:root {
-  --bg-primary: #0f0f13;
-  --bg-secondary: #16161d;
-  --bg-card: #1c1c26;
-  --accent-primary: #6c63ff;
-  --accent-secondary: #a78bfa;
-  --accent-glow: rgba(108, 99, 255, 0.35);
-  --text-primary: #f0f0ff;
-  --text-secondary: #9999bb;
-  --success: #22d3a3;
-  --success-glow: rgba(34, 211, 163, 0.35);
-  --danger: #f87171;
-  --danger-glow: rgba(248, 113, 113, 0.35);
-  --border: rgba(255, 255, 255, 0.07);
-}
-
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+/* ─── Global Reset ────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   min-height: 100dvh;
   overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Scrollbar */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: var(--bg-primary); }
-::-webkit-scrollbar-thumb { background: var(--accent-primary); border-radius: 3px; }
+/* ─── Dashboard Design Tokens ─────────────────────────────────────────────── */
+:root {
+  /* Layout */
+  --sidebar-width: 228px;
+  --topnav-height: 60px;
+
+  /* Surface colors */
+  --sidebar-bg: #ffffff;
+  --sidebar-border: #e8e8e8;
+  --content-bg: #f0f2f5;
+
+  /* Nav states */
+  --nav-active-bg: #ebebeb;
+  --nav-active-text: #111111;
+  --nav-inactive-text: #666666;
+  --nav-icon-active: #111111;
+  --nav-icon-inactive: #888888;
+
+  /* Create button */
+  --btn-create-bg: #141414;
+  --btn-create-border: rgba(255,255,255,0.08);
+  --btn-create-text: #ffffff;
+
+  /* Profile card */
+  --profile-card-bg: #f5f5f5;
+  --profile-card-border: #e8e8e8;
+
+  /* Text */
+  --text-primary: #111111;
+  --text-secondary: #555555;
+  --text-muted: #999999;
+
+  /* Top nav */
+  --topnav-text: #444444;
+  --topnav-icon: #555555;
+
+  /* Accent for VedaAI brand */
+  --brand-orange: #e8511a;
+}
+
+/* ─── Dark-mode Tokens (Health Check page) ────────────────────────────────── */
+.dark-surface {
+  --bg-primary: #0f0f13;
+  --bg-card: #1c1c26;
+  --accent-primary: #6c63ff;
+  --accent-secondary: #a78bfa;
+  --text-primary: #f0f0ff;
+  --text-secondary: #9999bb;
+  --success: #22d3a3;
+  --danger: #f87171;
+}
+
+/* ─── Scrollbar ───────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #d0d0d0; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #b0b0b0; }
+
+/* ─── Sidebar Nav Link ────────────────────────────────────────────────────── */
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--nav-inactive-text);
+  text-decoration: none;
+  transition: background 0.15s ease, color 0.15s ease;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.nav-link:hover { background: #f5f5f5; color: var(--nav-active-text); }
+.nav-link.active {
+  background: var(--nav-active-bg);
+  color: var(--nav-active-text);
+  font-weight: 600;
+}
+
+/* ─── Create Button ───────────────────────────────────────────────────────── */
+.btn-create {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 11px 16px;
+  background: var(--btn-create-bg);
+  color: var(--btn-create-text);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  letter-spacing: 0.01em;
+  text-decoration: none;
+}
+.btn-create:hover {
+  background: #2a2a2a;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+}
+.btn-create:active { transform: translateY(0); }
+
+/* ─── Profile Card ────────────────────────────────────────────────────────── */
+.profile-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--profile-card-bg);
+  border: 1px solid var(--profile-card-border);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.profile-card:hover { background: #eeeeee; }
+
+/* ─── Top Nav Button ──────────────────────────────────────────────────────── */
+.topnav-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  color: var(--topnav-icon);
+}
+.topnav-icon-btn:hover { background: rgba(0,0,0,0.06); }
+
+/* ─── Fade-up animation ───────────────────────────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fade-up { animation: fadeUp 0.4s ease both; }
