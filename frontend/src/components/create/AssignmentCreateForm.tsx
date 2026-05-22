@@ -292,6 +292,7 @@ function QuestionTypeSection() {
 // ═══════════════════════════════════════════════════════════════════════════════
 export default function AssignmentCreateForm() {
   const router = useRouter();
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const {
     uploadedFileName,
     dueDate,
@@ -299,7 +300,19 @@ export default function AssignmentCreateForm() {
     setUploadedFileName,
     setDueDate,
     setAdditionalInfo,
+    validateForm,
   } = useAssignmentStore();
+
+  const handleNext = () => {
+    const { isValid, error } = validateForm();
+    if (!isValid) {
+      setErrorMsg(error);
+      return;
+    }
+    setErrorMsg(null);
+    // Submit / next-step logic will go here
+    alert('Form is valid! Ready for next stage.');
+  };
 
   const handleFileSelect = (file: File) => {
     setUploadedFileName(file.name);
@@ -355,6 +368,14 @@ export default function AssignmentCreateForm() {
               Basic information about your assignment
             </p>
           </div>
+
+          {/* Error Message */}
+          {errorMsg && (
+            <div className="bg-red-50 text-red-600 text-[0.85rem] font-medium px-4 py-3 rounded-[12px] border border-red-100 flex items-center gap-2">
+               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0"><circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5"/><path d="M8 5V8M8 11.5H8.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+               {errorMsg}
+            </div>
+          )}
 
           {/* File upload zone */}
           <div className="flex flex-col gap-2">
@@ -434,9 +455,7 @@ export default function AssignmentCreateForm() {
             type="button"
             id="form-next-btn"
             className="inline-flex items-center gap-2 px-7 py-3 rounded-full bg-[#141414] text-white text-[0.875rem] font-semibold hover:bg-[#2a2a2a] transition-colors shadow-md"
-            onClick={() => {
-              // Submission / next-step logic will be implemented in a later stage
-            }}
+            onClick={handleNext}
           >
             Next
             <ArrowRightIcon />

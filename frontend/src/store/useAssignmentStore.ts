@@ -50,10 +50,11 @@ interface AssignmentFormState {
     value: string | number
   ) => void;
   resetForm: () => void;
+  validateForm: () => { isValid: boolean; error: string | null };
 }
 
 // ─── Store ────────────────────────────────────────────────────────────────────
-export const useAssignmentStore = create<AssignmentFormState>((set) => ({
+export const useAssignmentStore = create<AssignmentFormState>((set, get) => ({
   uploadedFileName: '',
   dueDate: '',
   questionTypes: DEFAULT_QUESTION_TYPES,
@@ -75,11 +76,19 @@ export const useAssignmentStore = create<AssignmentFormState>((set) => ({
     set((s) => ({ questionTypes: s.questionTypes.filter((q) => q.id !== id) })),
 
   updateQuestionType: (id, field, value) =>
-    set((s) => ({
-      questionTypes: s.questionTypes.map((q) =>
-        q.id === id ? { ...q, [field]: value } : q
-      ),
-    })),
+    set((s) => {
+      let validatedValue = value;
+      if (field === 'count' || field === 'marks') {
+        const num = Number(value);
+        // Enforce no negative numbers and no 0
+        validatedValue = isNaN(num) || num < 1 ? 1 : num;
+      }
+      return {
+        questionTypes: s.questionTypes.map((q) =>
+          q.id === id ? { ...q, [field]: validatedValue } : q
+        ),
+      };
+    }),
 
   resetForm: () =>
     set({
@@ -88,4 +97,18 @@ export const useAssignmentStore = create<AssignmentFormState>((set) => ({
       questionTypes: DEFAULT_QUESTION_TYPES,
       additionalInfo: '',
     }),
+
+  validateForm: () => {
+    const s = get();
+    if (!s.uploadedFileName) return { isValid: false, error: 'Please upload a file' };
+    if (!s.dueDate) return { isValid: false, error: 'Please select a due date' };
+    if (s.questionTypes.length === 0) return { isValid: false, error: 'Please add at least one question type' };
+    for (const q of s.questionTypes) {
+      if (q.count < 1 || q.marks < 1) {
+        return { isValid: false, error: 'Question count and marks must be at least 1' };
+      }
+    }
+    if (!s.additionalInfo.trim()) return { isValid: false, error: 'Please provide additional information' };
+    return { isValid: true, error: null };
+  },
 }));
