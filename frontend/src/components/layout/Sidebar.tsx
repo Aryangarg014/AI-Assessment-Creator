@@ -3,40 +3,20 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  HomeIcon,
-  GroupsIcon,
-  AssignmentsIcon,
-  ToolkitIcon,
-  LibraryIcon,
-  SettingsIcon,
+  HomeIcon, GroupsIcon, AssignmentsIcon,
+  ToolkitIcon, LibraryIcon, SettingsIcon,
 } from '@/components/icons/NavIcons';
 
-// ─── VedaAI Logo SVG ─────────────────────────────────────────────────────────
-function VedaAILogo() {
+// ─── VedaAI Logo ──────────────────────────────────────────────────────────────
+export function VedaAILogo() {
   return (
     <svg width="36" height="36" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="VedaAI Logo">
       <rect width="40" height="40" rx="10" fill="#303030" />
-      <path
-        fillRule="evenodd"
-        clipRule="evenodd"
-        d="M22.7271 28.3583C22.7271 28.3583 23.4545 30.3003 24.1212 30.4218H15.6969C13.9998 30.4218 12.485 29.4508 11.9997 27.6299L7.09074 13.0637C7.09074 13.0637 6.66669 11.3035 6 11.0001H14.6062C16.3033 11.0609 17.4548 11.6677 18.1215 13.9136L22.7271 28.3583Z"
-        fill="white"
-      />
-      <path
-        opacity="0.2"
-        fillRule="evenodd"
-        clipRule="evenodd"
-        d="M22.7271 28.3583C22.7271 28.3583 23.4545 30.3003 24.1212 30.4218H15.6969C13.9998 30.4218 12.485 29.4508 11.9997 27.6299L7.09074 13.0637C7.09074 13.0637 6.66669 11.3035 6 11.0001H14.6062C16.3033 11.0609 17.4548 11.6677 18.1215 13.9136L22.7271 28.3583Z"
-        fill="url(#sidebar_gradient)"
-      />
-      <path
-        fillRule="evenodd"
-        clipRule="evenodd"
-        d="M17.3336 28.3585C17.3336 28.3585 16.6061 30.3005 15.9395 30.4221H24.3638C26.0609 30.4221 27.5756 29.4511 28.0609 27.6302L32.9096 13.0643C32.9096 13.0643 33.3336 11.3042 34.0003 11.0008H25.4545C23.7574 11.0008 22.6666 11.6076 22 13.8535L17.3336 28.3585Z"
-        fill="white"
-      />
+      <path fillRule="evenodd" clipRule="evenodd" d="M22.7271 28.3583C22.7271 28.3583 23.4545 30.3003 24.1212 30.4218H15.6969C13.9998 30.4218 12.485 29.4508 11.9997 27.6299L7.09074 13.0637C7.09074 13.0637 6.66669 11.3035 6 11.0001H14.6062C16.3033 11.0609 17.4548 11.6677 18.1215 13.9136L22.7271 28.3583Z" fill="white" />
+      <path opacity="0.2" fillRule="evenodd" clipRule="evenodd" d="M22.7271 28.3583C22.7271 28.3583 23.4545 30.3003 24.1212 30.4218H15.6969C13.9998 30.4218 12.485 29.4508 11.9997 27.6299L7.09074 13.0637C7.09074 13.0637 6.66669 11.3035 6 11.0001H14.6062C16.3033 11.0609 17.4548 11.6677 18.1215 13.9136L22.7271 28.3583Z" fill="url(#sb_grad)" />
+      <path fillRule="evenodd" clipRule="evenodd" d="M17.3336 28.3585C17.3336 28.3585 16.6061 30.3005 15.9395 30.4221H24.3638C26.0609 30.4221 27.5756 29.4511 28.0609 27.6302L32.9096 13.0643C32.9096 13.0643 33.3336 11.3042 34.0003 11.0008H25.4545C23.7574 11.0008 22.6666 11.6076 22 13.8535L17.3336 28.3585Z" fill="white" />
       <defs>
-        <linearGradient id="sidebar_gradient" x1="15.0606" y1="9.34907" x2="15.0606" y2="32.1338" gradientUnits="userSpaceOnUse">
+        <linearGradient id="sb_grad" x1="15.0606" y1="9.34907" x2="15.0606" y2="32.1338" gradientUnits="userSpaceOnUse">
           <stop stopColor="white" stopOpacity="0" />
           <stop offset="0.33" stopColor="white" stopOpacity="0" />
           <stop offset="0.76" stopColor="#0E1513" />
@@ -47,7 +27,7 @@ function VedaAILogo() {
   );
 }
 
-// ─── Sparkle Icon for Create Button ──────────────────────────────────────────
+// ─── Sparkle Icon ─────────────────────────────────────────────────────────────
 function SparkleIcon() {
   return (
     <svg width="19" height="18" viewBox="0 0 19 18" fill="none" aria-hidden="true">
@@ -60,93 +40,43 @@ function SparkleIcon() {
 // ─── School Avatar ────────────────────────────────────────────────────────────
 function SchoolAvatar() {
   return (
-    <div
-      style={{
-        width: 38,
-        height: 38,
-        borderRadius: '50%',
-        background: 'linear-gradient(135deg, #f97316 0%, #dc2626 100%)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexShrink: 0,
-        fontSize: 13,
-        fontWeight: 700,
-        color: 'white',
-        letterSpacing: '-0.02em',
-      }}
-    >
+    <div className="w-[38px] h-[38px] rounded-full bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center shrink-0 text-[13px] font-bold text-white tracking-tight">
       DS
     </div>
   );
 }
 
-// ─── Nav Items Config ─────────────────────────────────────────────────────────
+// ─── Nav Items ────────────────────────────────────────────────────────────────
 const NAV_ITEMS = [
-  { href: '/',              label: 'Home',                Icon: HomeIcon },
-  { href: '/groups',        label: 'My Groups',           Icon: GroupsIcon },
-  { href: '/assignments',   label: 'Assignments',         Icon: AssignmentsIcon },
-  { href: '/ai-toolkit',   label: "AI Teacher's Toolkit", Icon: ToolkitIcon },
-  { href: '/library',      label: 'My Library',          Icon: LibraryIcon },
+  { href: '/',             label: 'Home',                 Icon: HomeIcon },
+  { href: '/groups',       label: 'My Groups',            Icon: GroupsIcon },
+  { href: '/assignments',  label: 'Assignments',          Icon: AssignmentsIcon },
+  { href: '/ai-toolkit',  label: "AI Teacher's Toolkit",  Icon: ToolkitIcon },
+  { href: '/library',     label: 'My Library',            Icon: LibraryIcon },
 ];
 
-// ─── Sidebar ──────────────────────────────────────────────────────────────────
+// ─── Sidebar Content (card shell is provided by the layout) ──────────────────
 export default function Sidebar() {
   const pathname = usePathname();
-
-  const isActive = (href: string) => {
-    if (href === '/') return pathname === '/';
-    return pathname.startsWith(href);
-  };
+  const isActive = (href: string) =>
+    href === '/' ? pathname === '/' : pathname.startsWith(href);
 
   return (
-    <aside
-      style={{
-        width: 'var(--sidebar-width)',
-        minWidth: 'var(--sidebar-width)',
-        height: '100vh',
-        background: 'var(--sidebar-bg)',
-        borderRight: '1px solid var(--sidebar-border)',
-        display: 'flex',
-        flexDirection: 'column',
-        padding: '0 12px',
-        overflowY: 'auto',
-        overflowX: 'hidden',
-        flexShrink: 0,
-      }}
-    >
-      {/* ── Logo ── */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 10,
-          padding: '18px 4px 16px',
-          borderBottom: '1px solid var(--sidebar-border)',
-          marginBottom: 14,
-        }}
-      >
+    <div className="flex flex-col h-full px-3">
+      {/* Logo */}
+      <div className="flex items-center gap-2.5 px-1 py-[18px] border-b border-[#e8e8e8] mb-3.5">
         <VedaAILogo />
-        <span
-          style={{
-            fontSize: 17,
-            fontWeight: 700,
-            color: 'var(--text-primary)',
-            letterSpacing: '-0.02em',
-          }}
-        >
-          VedaAI
-        </span>
+        <span className="text-[17px] font-bold text-[#111] tracking-tight">VedaAI</span>
       </div>
 
-      {/* ── Create Assignment ── */}
-      <Link href="/assignments/new" className="btn-create" style={{ marginBottom: 20 }}>
+      {/* Create Assignment */}
+      <Link href="/assignments/new" className="btn-create mb-5">
         <SparkleIcon />
         Create Assignment
       </Link>
 
-      {/* ── Navigation ── */}
-      <nav style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1 }}>
+      {/* Navigation */}
+      <nav className="flex flex-col gap-0.5 flex-1">
         {NAV_ITEMS.map(({ href, label, Icon }) => {
           const active = isActive(href);
           return (
@@ -158,45 +88,21 @@ export default function Sidebar() {
         })}
       </nav>
 
-      {/* ── Bottom Section ── */}
-      <div style={{ paddingBottom: 16 }}>
-        {/* Settings */}
-        <Link href="/settings" className="nav-link" style={{ marginBottom: 10 }}>
+      {/* Bottom: Settings + Profile */}
+      <div className="pb-4 flex flex-col gap-2.5">
+        <Link href="/settings" className={`nav-link${pathname === '/settings' ? ' active' : ''}`}>
           <SettingsIcon active={pathname === '/settings'} />
           Settings
         </Link>
 
-        {/* Profile Card */}
         <div className="profile-card">
           <SchoolAvatar />
-          <div style={{ overflow: 'hidden' }}>
-            <p
-              style={{
-                fontSize: 13,
-                fontWeight: 700,
-                color: 'var(--text-primary)',
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-              }}
-            >
-              Delhi Public School
-            </p>
-            <p
-              style={{
-                fontSize: 11.5,
-                color: 'var(--text-muted)',
-                marginTop: 1,
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-              }}
-            >
-              Bokaro Steel City
-            </p>
+          <div className="overflow-hidden">
+            <p className="text-[13px] font-bold text-[#111] truncate">Delhi Public School</p>
+            <p className="text-[11.5px] text-[#999] mt-px truncate">Bokaro Steel City</p>
           </div>
         </div>
       </div>
-    </aside>
+    </div>
   );
 }
