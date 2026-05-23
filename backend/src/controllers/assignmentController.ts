@@ -22,3 +22,81 @@ export const getAllAssignments = async (_req: Request, res: Response): Promise<v
     });
   }
 };
+
+/**
+ * POST /api/assignments
+ * Creates a new assignment with 'pending' status and queues a job.
+ */
+import { addAssessmentJob } from '../queues/assessmentQueue';
+import cloudinary from '../config/cloudinary';
+
+const uploadToCloudinary = (buffer: Buffer): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      { resource_type: 'auto' },
+      (error, result) => {
+        if (error || !result) return reject(error);
+        resolve(result.secure_url);
+      }
+    );
+    uploadStream.end(buffer);
+  });
+};
+
+export const createAssignment = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { title, dueDate, additionalInfo, uploadedFileName } = req.body;
+    let { questionTypes } = req.body;
+
+    // questionTypes comes as a JSON string because of FormData
+    if (typeof questionTypes === 'string') {
+      try {
+        questionTypes = JSON.parse(questionTypes);
+      } catch (e) {
+        questionTypes = [];
+      }
+    }
+
+    // Upload file if it exists
+    let fileUrl: string | undefined;
+    if (req.file) {
+      fileUrl = await uploadToCloudinary(req.file.buffer);
+    }
+
+    // Calculate total marks from questionTypes
+    let totalMarks = 0;
+    if (Array.isArray(questionTypes)) {
+      totalMarks = questionTypes.reduce((sum, q) => sum + (q.count * q.marks), 0);
+    }
+
+    // 1. Create Assignment in DB
+    const newAssignment = await AssignmentModel.create({
+      title: title || uploadedFileName || 'Untitled Assignment',
+      dueDate,
+      description: additionalInfo,
+      status: 'pending',
+      totalMarks,
+      fileUrl,
+      // For now, hardcode a subject/grade or leave empty since UI doesn't collect it yet
+    });
+
+    // 2. Queue the BullMQ job
+    await addAssessmentJob(newAssignment._id.toString(), {
+      ...req.body,
+      questionTypes,
+      fileUrl,
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Assignment created and job queued successfully',
+      assignmentId: newAssignment._id,
+    });
+  } catch (err) {
+    console.error('[assignmentController] createAssignment error:', (err as Error).message);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create assignment',
+    });
+  }
+};

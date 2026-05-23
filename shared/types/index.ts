@@ -6,7 +6,7 @@
 
 // ─── Assignment ───────────────────────────────────────────────────────────────
 
-export type AssignmentStatus = 'draft' | 'published' | 'closed' | 'grading';
+export type AssignmentStatus = 'draft' | 'pending' | 'published' | 'closed' | 'grading';
 
 export interface Assignment {
   _id?: string;
@@ -17,6 +17,7 @@ export interface Assignment {
   totalMarks?: number;
   subject?: string;
   grade?: string;
+  fileUrl?: string;
   createdBy?: string;     // User ID reference
   createdAt?: string;
   updatedAt?: string;

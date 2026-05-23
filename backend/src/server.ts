@@ -9,7 +9,13 @@ const bootstrap = async (): Promise<void> => {
 
   // Eagerly connect Redis so the first health-check isn't slow
   const redis = getRedisClient();
-  await redis.connect();
+  if (redis.status === 'wait' || redis.status === 'close' || redis.status === 'reconnecting') {
+    try {
+      await redis.connect();
+    } catch (e) {
+      // Ignore if it's already connecting
+    }
+  }
 
   // Start HTTP server
   const server = app.listen(config.port, () => {

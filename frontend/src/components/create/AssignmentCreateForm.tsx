@@ -297,24 +297,62 @@ export default function AssignmentCreateForm() {
     uploadedFileName,
     dueDate,
     additionalInfo,
+    questionTypes,
     setUploadedFileName,
     setDueDate,
     setAdditionalInfo,
     validateForm,
   } = useAssignmentStore();
 
-  const handleNext = () => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  const handleNext = async () => {
     const { isValid, error } = validateForm();
     if (!isValid) {
       setErrorMsg(error);
       return;
     }
     setErrorMsg(null);
-    // Submit / next-step logic will go here
-    alert('Form is valid! Ready for next stage.');
+    setIsSubmitting(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('title', uploadedFileName);
+      formData.append('uploadedFileName', uploadedFileName);
+      formData.append('dueDate', dueDate);
+      formData.append('additionalInfo', additionalInfo);
+      formData.append('questionTypes', JSON.stringify(questionTypes));
+
+      if (selectedFile) {
+        formData.append('file', selectedFile);
+      }
+
+      const base = process.env.NEXT_PUBLIC_BACKEND_URL ?? 'http://localhost:5000';
+      const res = await fetch(`${base}/api/assignments`, {
+        method: 'POST',
+        // Note: Do not set Content-Type header manually when sending FormData,
+        // the browser will automatically set it with the correct boundary.
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to create assignment');
+      }
+
+      alert(`Assignment created successfully! ID: ${data.assignmentId}`);
+      // In Stage 9 this will navigate to the next step, but for now we route back to /assignments
+      router.push('/assignments');
+    } catch (err: any) {
+      setErrorMsg(err.message || 'An error occurred while submitting.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleFileSelect = (file: File) => {
+    setSelectedFile(file);
     setUploadedFileName(file.name);
   };
 
@@ -454,11 +492,14 @@ export default function AssignmentCreateForm() {
           <button
             type="button"
             id="form-next-btn"
-            className="inline-flex items-center gap-2 px-7 py-3 rounded-full bg-[#141414] text-white text-[0.875rem] font-semibold hover:bg-[#2a2a2a] transition-colors shadow-md"
+            className={`inline-flex items-center gap-2 px-7 py-3 rounded-full text-white text-[0.875rem] font-semibold transition-colors shadow-md ${
+              isSubmitting ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#141414] hover:bg-[#2a2a2a]'
+            }`}
             onClick={handleNext}
+            disabled={isSubmitting}
           >
-            Next
-            <ArrowRightIcon />
+            {isSubmitting ? 'Submitting...' : 'Next'}
+            {!isSubmitting && <ArrowRightIcon />}
           </button>
         </div>
       </div>

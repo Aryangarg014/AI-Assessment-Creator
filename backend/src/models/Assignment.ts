@@ -20,8 +20,8 @@ const AssignmentSchema = new Schema<AssignmentDocument>(
     },
     status: {
       type: String,
-      enum: ['draft', 'published', 'closed', 'grading'] satisfies AssignmentStatus[],
-      default: 'draft',
+      enum: ['draft', 'pending', 'published', 'closed', 'grading'] satisfies AssignmentStatus[],
+      default: 'pending',
     },
     totalMarks: {
       type: Number,
@@ -34,6 +34,9 @@ const AssignmentSchema = new Schema<AssignmentDocument>(
     grade: {
       type: String,
       trim: true,
+    },
+    fileUrl: {
+      type: String,
     },
     createdBy: {
       type: String, // will become ObjectId ref to User in a later stage
