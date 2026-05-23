@@ -29,9 +29,8 @@ export const getRedisClient = (): Redis => {
     family: 0,
     // Fail fast so health checks don't hang
     connectTimeout: 5000,
-    commandTimeout: 3000,
-    // Disable auto-reconnect retries during health checks
-    maxRetriesPerRequest: 1,
+    // BullMQ requires maxRetriesPerRequest to be null
+    maxRetriesPerRequest: null,
     // Prevent ioredis from spamming reconnect logs in dev
     lazyConnect: true,
   });

@@ -2,6 +2,7 @@ import app from './app';
 import config from './config';
 import { connectDB } from './config/db';
 import { getRedisClient } from './config/redis';
+import { initAssessmentWorker } from './workers/assessmentWorker';
 
 const bootstrap = async (): Promise<void> => {
   // Connect to MongoDB
@@ -17,6 +18,9 @@ const bootstrap = async (): Promise<void> => {
     }
   }
 
+  // Initialize BullMQ worker
+  const assessmentWorker = initAssessmentWorker();
+
   // Start HTTP server
   const server = app.listen(config.port, () => {
     console.log(`✅ Backend running on http://localhost:${config.port}`);
@@ -28,6 +32,7 @@ const bootstrap = async (): Promise<void> => {
   const shutdown = () => {
     console.log('\nShutting down gracefully…');
     server.close(async () => {
+      await assessmentWorker.close();
       await redis.quit();
       process.exit(0);
     });

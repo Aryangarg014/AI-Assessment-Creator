@@ -20,7 +20,7 @@ const AssignmentSchema = new Schema<AssignmentDocument>(
     },
     status: {
       type: String,
-      enum: ['draft', 'pending', 'published', 'closed', 'grading'] satisfies AssignmentStatus[],
+      enum: ['draft', 'pending', 'processing', 'completed', 'published', 'closed', 'grading'] satisfies AssignmentStatus[],
       default: 'pending',
     },
     totalMarks: {

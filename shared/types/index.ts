@@ -6,7 +6,7 @@
 
 // ─── Assignment ───────────────────────────────────────────────────────────────
 
-export type AssignmentStatus = 'draft' | 'pending' | 'published' | 'closed' | 'grading';
+export type AssignmentStatus = 'draft' | 'pending' | 'processing' | 'completed' | 'published' | 'closed' | 'grading';
 
 export interface Assignment {
   _id?: string;
