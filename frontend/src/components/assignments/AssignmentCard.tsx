@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import type { Assignment } from '@/types';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -32,6 +33,7 @@ function DotsIcon() {
 interface Props { assignment: Assignment }
 
 export default function AssignmentCard({ assignment }: Props) {
+  const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -79,7 +81,10 @@ export default function AssignmentCard({ assignment }: Props) {
             >
               <button
                 role="menuitem"
-                onClick={() => setMenuOpen(false)}
+                onClick={() => {
+                  setMenuOpen(false);
+                  router.push(`/assignments/${assignment._id}/result`);
+                }}
                 className="w-full px-4 py-[11px] text-left text-sm text-[#111] font-medium hover:bg-[#f8f8f8] transition-colors border-none bg-transparent cursor-pointer"
               >
                 View Assignment

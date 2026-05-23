@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import AssignmentModel from '../models/Assignment';
+import QuestionPaperModel from '../models/QuestionPaper';
 
 /**
  * GET /api/assignments
@@ -97,6 +98,38 @@ export const createAssignment = async (req: Request, res: Response): Promise<voi
     res.status(500).json({
       success: false,
       message: 'Failed to create assignment',
+    });
+  }
+};
+
+/**
+ * GET /api/assignments/:id/result
+ * Fetches the assignment and its generated QuestionPaper
+ */
+export const getAssignmentResult = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+
+    const assignment = await AssignmentModel.findById(id).lean();
+    if (!assignment) {
+      res.status(404).json({ success: false, message: 'Assignment not found' });
+      return;
+    }
+
+    const questionPaper = await QuestionPaperModel.findOne({ assignmentId: id }).lean();
+
+    res.status(200).json({
+      success: true,
+      data: {
+        assignment,
+        questionPaper,
+      },
+    });
+  } catch (err) {
+    console.error('[assignmentController] getAssignmentResult error:', (err as Error).message);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch assignment result',
     });
   }
 };
