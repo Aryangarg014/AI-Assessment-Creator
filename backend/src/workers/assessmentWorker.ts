@@ -3,6 +3,7 @@ import { getRedisClient } from '../config/redis';
 import AssignmentModel from '../models/Assignment';
 import QuestionPaperModel from '../models/QuestionPaper';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { getIO } from '../config/socket';
 
 // Initialize Gemini
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
@@ -32,12 +33,22 @@ export const initAssessmentWorker = () => {
 
       console.log(`\n[Worker] Started processing assignment: ${assignmentId}`);
 
+      const emitProgress = (msg: string) => {
+        try { getIO().to(assignmentId).emit('job:progress', { message: msg }); } catch (e) {}
+      };
+
       // 1. Update status to processing
       await AssignmentModel.findByIdAndUpdate(assignmentId, { status: 'processing' });
+      try {
+        getIO().to(assignmentId).emit('job:processing', { assignmentId });
+      } catch (e) {
+        console.warn('[Worker] Socket emit processing skipped (socket not initialized)');
+      }
 
       // 2. Fetch File if present
       const generativeParts: any[] = [];
       if (fileUrl) {
+        emitProgress('Reading your uploaded document...');
         console.log(`[Worker] Fetching file from Cloudinary: ${fileUrl}`);
         const filePart = await fetchFileAsGenerativePart(fileUrl);
         generativeParts.push(filePart);
@@ -86,6 +97,7 @@ Return ONLY valid JSON.
       generativeParts.push({ text: prompt });
 
       // 4. Call Gemini
+      emitProgress('Planning the assignment layout...');
       console.log(`[Worker] Calling Gemini API...`);
       const model = genAI.getGenerativeModel({ model: 'gemini-3.5-flash' });
       const result = await model.generateContent(generativeParts);
@@ -104,15 +116,24 @@ Return ONLY valid JSON.
       const parsedJson = JSON.parse(text);
 
       // 5. Save to DB
+      emitProgress('Saving your new assignment...');
       console.log(`[Worker] Saving QuestionPaper to database...`);
-      await QuestionPaperModel.create({
+      const paper = await QuestionPaperModel.create({
         ...parsedJson,
         assignmentId,
         generatedByAI: true,
       });
 
-      // Update Assignment status
-      await AssignmentModel.findByIdAndUpdate(assignmentId, { status: 'completed' });
+      // Update Assignment status and use the AI-generated title
+      await AssignmentModel.findByIdAndUpdate(assignmentId, { 
+        status: 'completed',
+        title: paper.title || title
+      });
+      try {
+        getIO().to(assignmentId).emit('job:completed', { assignmentId });
+      } catch (e) {
+        console.warn('[Worker] Socket emit completed skipped');
+      }
       console.log(`[Worker] Successfully completed assignment: ${assignmentId}`);
     },
     {
@@ -125,6 +146,9 @@ Return ONLY valid JSON.
     console.error(`[Worker] Job ${job?.id} failed with error:`, err.message);
     if (job?.data?.assignmentId) {
       await AssignmentModel.findByIdAndUpdate(job.data.assignmentId, { status: 'draft' });
+      try {
+        getIO().to(job.data.assignmentId).emit('job:failed', { assignmentId: job.data.assignmentId, error: err.message });
+      } catch (e) {}
     }
   });
 

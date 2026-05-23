@@ -341,9 +341,12 @@ export default function AssignmentCreateForm() {
         throw new Error(data.message || 'Failed to create assignment');
       }
 
-      alert(`Assignment created successfully! ID: ${data.assignmentId}`);
-      // In Stage 9 this will navigate to the next step, but for now we route back to /assignments
-      router.push('/assignments');
+      if (data.success) {
+        useAssignmentStore.getState().resetForm();
+        router.push(`/assignments/${data.assignmentId}/loading`);
+      } else {
+        throw new Error(data.message || 'Failed to create assignment');
+      }
     } catch (err: any) {
       setErrorMsg(err.message || 'An error occurred while submitting.');
     } finally {

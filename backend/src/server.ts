@@ -1,8 +1,10 @@
+import { createServer } from 'http';
 import app from './app';
 import config from './config';
 import { connectDB } from './config/db';
 import { getRedisClient } from './config/redis';
 import { initAssessmentWorker } from './workers/assessmentWorker';
+import { initSocket } from './config/socket';
 
 const bootstrap = async (): Promise<void> => {
   // Connect to MongoDB
@@ -21,8 +23,12 @@ const bootstrap = async (): Promise<void> => {
   // Initialize BullMQ worker
   const assessmentWorker = initAssessmentWorker();
 
+  // Create HTTP server and initialize Socket.io
+  const httpServer = createServer(app);
+  initSocket(httpServer);
+
   // Start HTTP server
-  const server = app.listen(config.port, () => {
+  const server = httpServer.listen(config.port, () => {
     console.log(`✅ Backend running on http://localhost:${config.port}`);
     console.log(`   Environment : ${config.nodeEnv}`);
     console.log(`   Health check: http://localhost:${config.port}/api/health`);
