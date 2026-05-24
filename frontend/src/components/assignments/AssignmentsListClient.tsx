@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import AssignmentCard from '@/components/assignments/AssignmentCard';
 import FloatingCreateBtn from '@/components/assignments/FloatingCreateBtn';
@@ -43,6 +43,36 @@ export default function AssignmentsListClient({
   const [isAtBottom, setIsAtBottom] = useState(false);
   const [isOverflowing, setIsOverflowing] = useState(false);
 
+  // ── Search & Filter State ───────────────────────────────────────────────────
+  const [searchQuery, setSearchQuery] = useState('');
+  type FilterOption = 'Newest' | 'Oldest' | 'A-Z';
+  const [filterOption, setFilterOption] = useState<FilterOption>('Newest');
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+
+  const filteredAndSortedAssignments = useMemo(() => {
+    let result = [...assignments];
+
+    // Filter
+    if (searchQuery.trim()) {
+      const lowerQuery = searchQuery.toLowerCase();
+      result = result.filter((a) => a.title?.toLowerCase().includes(lowerQuery));
+    }
+
+    // Sort
+    result.sort((a, b) => {
+      if (filterOption === 'A-Z') {
+        return (a.title || '').localeCompare(b.title || '');
+      } else if (filterOption === 'Oldest') {
+        return new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime();
+      } else {
+        // Newest (default)
+        return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+      }
+    });
+
+    return result;
+  }, [assignments, searchQuery, filterOption]);
+
   const checkBottom = (container: HTMLElement) => {
     // Does the content actually overflow the container?
     const overflows = container.scrollHeight > container.clientHeight + 5;
@@ -70,7 +100,7 @@ export default function AssignmentsListClient({
     container.addEventListener('scroll', handler, { passive: true });
     return () => container.removeEventListener('scroll', handler);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [assignments]);
+  }, [filteredAndSortedAssignments]);
 
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
@@ -117,27 +147,60 @@ export default function AssignmentsListClient({
          */}
         <div className="bg-white rounded-[20px] px-4 py-3 flex items-center justify-between gap-3">
 
-          {/* Filter button — no border */}
-          <button
-            id="filter-by-btn"
-            className="flex items-center gap-2 px-3 py-1.5 rounded-full text-[0.85rem] font-medium text-[#555] hover:bg-gray-100 transition-colors cursor-pointer"
-          >
-            <FilterIcon />
-            <span className="hidden sm:inline">Filter By</span>
-            <span className="sm:hidden">Filter</span>
-          </button>
+          {/* Filter dropdown container */}
+          <div className="relative">
+            <button
+              id="filter-by-btn"
+              onClick={() => setIsFilterOpen(!isFilterOpen)}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-full text-[0.85rem] font-medium text-[#555] hover:bg-gray-100 transition-colors cursor-pointer"
+            >
+              <FilterIcon />
+              <span className="hidden sm:inline">
+                {filterOption === 'Newest' ? 'Filter By' : filterOption}
+              </span>
+              <span className="sm:hidden">Filter</span>
+            </button>
+
+            {isFilterOpen && (
+              <>
+                <div 
+                  className="fixed inset-0 z-10" 
+                  onClick={() => setIsFilterOpen(false)}
+                />
+                <div className="absolute left-0 top-full mt-2 w-32 bg-white rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.1)] border border-gray-100 z-20 py-1 overflow-hidden">
+                  {(['Newest', 'Oldest', 'A-Z'] as FilterOption[]).map((opt) => (
+                    <button
+                      key={opt}
+                      onClick={() => {
+                        setFilterOption(opt);
+                        setIsFilterOpen(false);
+                      }}
+                      className={`w-full text-left px-4 py-2 text-[0.85rem] hover:bg-gray-50 transition-colors ${
+                        filterOption === opt ? 'text-[#111] font-semibold bg-gray-50/50' : 'text-[#555]'
+                      }`}
+                    >
+                      {opt}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
 
           {/* Search — w-72, white bg, soft grey border */}
-          <div className="flex items-center gap-2 bg-white rounded-full px-4 py-2 border border-gray-300 w-72">
+          <div className="flex items-center gap-2 bg-white rounded-full px-4 py-2 border border-gray-300 w-72 focus-within:border-gray-400 transition-colors">
             <SearchIcon />
             <input
               id="search-assignments-input"
               type="search"
               placeholder="Search Assignment"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="flex-1 bg-transparent border-none outline-none text-[0.85rem] text-[#333] placeholder:text-[#bbb] min-w-0"
             />
           </div>
         </div>
+
 
         {/* ── Assignments grid ───────────────────────────────────────── */}
         {/*
@@ -145,7 +208,7 @@ export default function AssignmentsListClient({
          * absolutely within the grid bounds.
          */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 relative">
-          {assignments.map((assignment) => (
+          {filteredAndSortedAssignments.map((assignment) => (
             <AssignmentCard
               key={assignment._id ?? assignment.title}
               assignment={assignment}
@@ -164,7 +227,7 @@ export default function AssignmentsListClient({
            * the gradient fades from white/90 at bottom to transparent.
            * pointer-events-none ensures the button beneath stays clickable.
            */}
-          {assignments.length > 4 && (
+          {filteredAndSortedAssignments.length > 4 && (
             <div
               className={[
                 'absolute bottom-0 left-0 right-0 h-32',
