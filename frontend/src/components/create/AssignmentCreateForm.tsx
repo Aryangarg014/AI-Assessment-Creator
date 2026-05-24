@@ -4,6 +4,7 @@ import { useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAssignmentStore, QUESTION_TYPE_OPTIONS } from '@/store/useAssignmentStore';
+import GeneratingTabContent from './GeneratingTabContent';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Icons
@@ -205,7 +206,6 @@ function QuestionTypeSection() {
     <div className="flex flex-col gap-3">
       {/* Column headers */}
       <div className="hidden md:grid grid-cols-[1fr_auto_auto] gap-3 items-center px-1">
-        <p className="text-[0.85rem] font-bold text-[#111]">Question Type</p>
         <p className="text-[0.85rem] text-[#555] w-28 text-center">No. of Questions</p>
         <p className="text-[0.85rem] text-[#555] w-24 text-center">Marks</p>
       </div>
@@ -306,6 +306,9 @@ export default function AssignmentCreateForm() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [newId, setNewId] = useState<string | null>(null);
 
   const handleNext = async () => {
     const { isValid, error } = validateForm();
@@ -343,7 +346,8 @@ export default function AssignmentCreateForm() {
 
       if (data.success) {
         useAssignmentStore.getState().resetForm();
-        router.push(`/assignments/${data.assignmentId}/loading`);
+        setNewId(data.assignmentId);
+        setIsGenerating(true);
       } else {
         throw new Error(data.message || 'Failed to create assignment');
       }
@@ -393,14 +397,18 @@ export default function AssignmentCreateForm() {
           </p>
         </div>
 
-        {/* Progress bar — 2-step indicator, step 1 active */}
-        <div className="flex gap-2" role="progressbar" aria-valuenow={1} aria-valuemin={1} aria-valuemax={2} aria-label="Step 1 of 2">
+        {/* Progress bar — 2-step indicator */}
+        <div className="flex gap-2" role="progressbar" aria-valuenow={isGenerating ? 2 : 1} aria-valuemin={1} aria-valuemax={2} aria-label={isGenerating ? "Step 2 of 2" : "Step 1 of 2"}>
           <div className="flex-1 h-1.5 bg-[#141414] rounded-full" />
-          <div className="flex-1 h-1.5 bg-gray-200 rounded-full" />
+          <div className={`flex-1 h-1.5 rounded-full transition-colors ${isGenerating ? 'bg-[#141414]' : 'bg-gray-200'}`} />
         </div>
 
-        {/* ── White form card ── */}
-        <div className="bg-white rounded-[20px] p-5 md:p-8 flex flex-col gap-6">
+        {isGenerating && newId ? (
+          <GeneratingTabContent id={newId} />
+        ) : (
+          <>
+            {/* ── White form card ── */}
+            <div className="bg-white rounded-[20px] p-5 md:p-8 flex flex-col gap-6">
 
           {/* Section title */}
           <div>
@@ -505,6 +513,8 @@ export default function AssignmentCreateForm() {
             {!isSubmitting && <ArrowRightIcon />}
           </button>
         </div>
+          </>
+        )}
       </div>
     </div>
   );
