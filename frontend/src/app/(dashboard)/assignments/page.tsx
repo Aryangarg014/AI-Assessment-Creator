@@ -74,8 +74,8 @@ function EmptyState() {
         </div>
       </div>
 
-      {/* Mobile FAB + Bottom Nav spacing */}
-      <FloatingCreateBtn />
+      {/* Mobile FAB + Bottom Nav spacing
+      <FloatingCreateBtn /> */}
     </div>
   );
 }

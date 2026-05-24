@@ -31,7 +31,7 @@ export default function FloatingCreateBtn() {
       {/* Mobile circle */}
       <Link
         href="/assignments/new"
-        className="md:hidden fixed bottom-20 right-5 w-12 h-12 rounded-full bg-[#f97316] text-white flex items-center justify-center shadow-[0_4px_16px_rgba(249,115,22,0.4)] hover:bg-[#ea6f0e] transition-colors z-50 no-underline"
+        className="md:hidden fixed bottom-20 right-5 w-12 h-12 rounded-full bg-white text-[#f97316] flex items-center justify-center shadow-[0_4px_16px_rgba(0,0,0,0.1)] border border-[#f97316]/10 hover:bg-neutral-50 transition-colors z-50 no-underline"
         aria-label="Create assignment"
       >
         <PlusIcon size={18} />
