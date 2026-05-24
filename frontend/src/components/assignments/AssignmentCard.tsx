@@ -54,7 +54,7 @@ export default function AssignmentCard({ assignment }: Props) {
     if (!confirmDelete) return;
 
     try {
-      const base = process.env.NEXT_PUBLIC_BACKEND_URL ?? 'http://localhost:5000';
+      const base = process.env.NEXT_PUBLIC_BACKEND_URL ?? process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000';
       const res = await fetch(`${base}/api/assignments/${assignment._id}`, {
         method: 'DELETE',
       });

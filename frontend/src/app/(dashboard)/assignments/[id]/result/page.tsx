@@ -7,7 +7,7 @@ async function getResult(
   id: string,
 ): Promise<{ assignment: Assignment; questionPaper: QuestionPaper } | null> {
   try {
-    const base = process.env.BACKEND_URL ?? 'http://localhost:5000';
+    const base = process.env.BACKEND_URL ?? process.env.NEXT_PUBLIC_BACKEND_URL ?? process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000';
     const res = await fetch(`${base}/api/assignments/${id}/result`, {
       cache: 'no-store',
     });

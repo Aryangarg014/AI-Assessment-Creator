@@ -331,7 +331,7 @@ export default function AssignmentCreateForm() {
         formData.append('file', selectedFile);
       }
 
-      const base = process.env.NEXT_PUBLIC_BACKEND_URL ?? 'http://localhost:5000';
+      const base = process.env.NEXT_PUBLIC_BACKEND_URL ?? process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000';
       const res = await fetch(`${base}/api/assignments`, {
         method: 'POST',
         // Note: Do not set Content-Type header manually when sending FormData,

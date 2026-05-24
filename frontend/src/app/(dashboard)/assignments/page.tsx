@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 // ─── Data Fetching ─────────────────────────────────────────────────────────────
 async function getAssignments(): Promise<Assignment[]> {
   try {
-    const base = process.env.BACKEND_URL ?? 'http://localhost:5000';
+    const base = process.env.BACKEND_URL ?? process.env.NEXT_PUBLIC_BACKEND_URL ?? process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000';
     const res = await fetch(`${base}/api/assignments`, { cache: 'no-store' });
     if (!res.ok) return [];
     const json = await res.json();
