@@ -133,3 +133,34 @@ export const getAssignmentResult = async (req: Request, res: Response): Promise<
     });
   }
 };
+
+/**
+ * DELETE /api/assignments/:id
+ * Deletes the assignment and its associated question paper.
+ */
+export const deleteAssignment = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+
+    const deletedAssignment = await AssignmentModel.findByIdAndDelete(id);
+    if (!deletedAssignment) {
+      res.status(404).json({ success: false, message: 'Assignment not found' });
+      return;
+    }
+
+    // Also delete the associated question paper
+    await QuestionPaperModel.findOneAndDelete({ assignmentId: id });
+
+    res.status(200).json({
+      success: true,
+      message: 'Assignment and associated question paper deleted successfully',
+    });
+  } catch (err) {
+    console.error('[assignmentController] deleteAssignment error:', (err as Error).message);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete assignment',
+    });
+  }
+};
+

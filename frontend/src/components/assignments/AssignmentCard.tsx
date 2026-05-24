@@ -48,6 +48,28 @@ export default function AssignmentCard({ assignment }: Props) {
     return () => { document.removeEventListener('mousedown', onMouse); document.removeEventListener('keydown', onKey); };
   }, [menuOpen]);
 
+  const handleDelete = async () => {
+    setMenuOpen(false);
+    const confirmDelete = window.confirm('Are you sure you want to delete this assignment?');
+    if (!confirmDelete) return;
+
+    try {
+      const base = process.env.NEXT_PUBLIC_BACKEND_URL ?? 'http://localhost:5000';
+      const res = await fetch(`${base}/api/assignments/${assignment._id}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        router.refresh(); // Refresh the server component to get the updated list
+      } else {
+        const data = await res.json();
+        alert(data.message || 'Failed to delete assignment');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('An error occurred while deleting the assignment.');
+    }
+  };
+
   const assignedOn = formatDate(assignment.createdAt);
   const dueOn = formatDate(assignment.dueDate);
 
@@ -91,7 +113,7 @@ export default function AssignmentCard({ assignment }: Props) {
               </button>
               <button
                 role="menuitem"
-                onClick={() => setMenuOpen(false)}
+                onClick={handleDelete}
                 className="w-full px-4 py-[11px] text-left text-sm text-red-500 font-medium hover:bg-red-50 transition-colors border-none bg-transparent cursor-pointer border-t border-[#f5f5f5]"
               >
                 Delete
