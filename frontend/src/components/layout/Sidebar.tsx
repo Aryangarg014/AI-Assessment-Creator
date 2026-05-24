@@ -62,21 +62,21 @@ export default function Sidebar() {
     href === '/' ? pathname === '/' : pathname.startsWith(href);
 
   return (
-    <div className="flex flex-col h-full px-3">
+    <div className="flex flex-col h-full p-6">
       {/* Logo */}
-      <div className="flex items-center gap-2.5 px-1 py-[18px] border-b border-[#e8e8e8] mb-3.5">
+      <div className="flex items-center gap-2.5 px-1 py-4 border-b border-[#e8e8e8] mb-8">
         <VedaAILogo />
         <span className="text-[17px] font-bold text-[#111] tracking-tight">VedaAI</span>
       </div>
 
       {/* Create Assignment */}
-      <Link href="/assignments/new" className="btn-create mb-5">
+      <Link href="/assignments/new" className="btn-create mb-8">
         <SparkleIcon />
-        Create Assignment
+        <span className="whitespace-nowrap">Create Assignment</span>
       </Link>
 
       {/* Navigation */}
-      <nav className="flex flex-col gap-0.5 flex-1">
+      <nav className="flex flex-col gap-2 flex-1">
         {NAV_ITEMS.map(({ href, label, Icon }) => {
           const active = isActive(href);
           return (
@@ -89,7 +89,7 @@ export default function Sidebar() {
       </nav>
 
       {/* Bottom: Settings + Profile */}
-      <div className="pb-4 flex flex-col gap-2.5">
+      <div className="pb-4 flex flex-col gap-4 mt-8">
         <Link href="/settings" className={`nav-link${pathname === '/settings' ? ' active' : ''}`}>
           <SettingsIcon active={pathname === '/settings'} />
           Settings
